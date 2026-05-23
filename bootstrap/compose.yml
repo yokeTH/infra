@@ -25,12 +25,26 @@ services:
       TS_AUTHKEY: ${TS_AUTHKEY_KOMODO}
       TS_STATE_DIR: /var/lib/tailscale
       TS_USERSPACE: "true"
-      TS_SERVE_CONFIG: /config/serve.json
     volumes:
       - tailscale-komodo-state:/var/lib/tailscale
-      - ./tailscale/serve-komodo.json:/config/serve.json:ro
     networks:
       - internal
+    labels:
+      - komodo.skip
+
+  caddy-komodo:
+    build: ./caddy-komodo
+    restart: unless-stopped
+    depends_on:
+      tailscale-komodo:
+        condition: service_started
+    network_mode: service:tailscale-komodo
+    environment:
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+    volumes:
+      - ./caddy-komodo/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-komodo-data:/data
+      - caddy-komodo-config:/config
     labels:
       - komodo.skip
 
@@ -112,6 +126,8 @@ services:
 
 volumes:
   traefik-acme:
+  caddy-komodo-data:
+  caddy-komodo-config:
   tailscale-komodo-state:
   komodo-mongo-data:
   komodo-mongo-config:
