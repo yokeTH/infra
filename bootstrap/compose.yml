@@ -1,0 +1,119 @@
+name: bootstrap
+
+services:
+  traefik:
+    image: traefik:v3.7.1
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - traefik-acme:/acme
+    networks:
+      - public
+
+  tailscale-komodo:
+    image: tailscale/tailscale:latest
+    hostname: komodo
+    restart: unless-stopped
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY_KOMODO}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "true"
+      TS_SERVE_CONFIG: /config/serve.json
+    volumes:
+      - tailscale-komodo-state:/var/lib/tailscale
+      - ./tailscale/serve-komodo.json:/config/serve.json:ro
+    networks:
+      - internal
+
+  komodo-mongo:
+    image: mongo:7
+    command: --quiet --wiredTigerCacheSizeGB 0.25
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${KOMODO_DATABASE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${KOMODO_DATABASE_PASSWORD}
+    volumes:
+      - komodo-mongo-data:/data/db
+      - komodo-mongo-config:/data/configdb
+    networks:
+      - internal
+
+  komodo-core:
+    image: ghcr.io/moghtech/komodo-core:2.2.0
+    init: true
+    restart: unless-stopped
+    depends_on:
+      tailscale-komodo:
+        condition: service_started
+      komodo-mongo:
+        condition: service_started
+    network_mode: service:tailscale-komodo
+    environment:
+      KOMODO_DATABASE_ADDRESS: komodo-mongo:27017
+      KOMODO_DATABASE_USERNAME: ${KOMODO_DATABASE_USERNAME}
+      KOMODO_DATABASE_PASSWORD: ${KOMODO_DATABASE_PASSWORD}
+      KOMODO_HOST: ${KOMODO_HOST}
+      KOMODO_TITLE: Komodo
+      KOMODO_LOCAL_AUTH: "true"
+      KOMODO_INIT_ADMIN_USERNAME: ${KOMODO_INIT_ADMIN_USERNAME}
+      KOMODO_INIT_ADMIN_PASSWORD: ${KOMODO_INIT_ADMIN_PASSWORD}
+      KOMODO_WEBHOOK_SECRET: ${KOMODO_WEBHOOK_SECRET}
+      KOMODO_JWT_SECRET: ${KOMODO_JWT_SECRET}
+      KOMODO_JWT_TTL: 1-day
+      KOMODO_PERIPHERY_PUBLIC_KEY: file:/config/keys/periphery.pub
+      KOMODO_FIRST_SERVER_NAME: Local
+      KOMODO_OIDC_ENABLED: ${KOMODO_OIDC_ENABLED:-false}
+      KOMODO_OIDC_PROVIDER: ${KOMODO_OIDC_PROVIDER:-}
+      KOMODO_OIDC_REDIRECT_HOST: ${KOMODO_OIDC_REDIRECT_HOST:-}
+      KOMODO_OIDC_CLIENT_ID: ${KOMODO_OIDC_CLIENT_ID:-}
+      KOMODO_OIDC_CLIENT_SECRET: ${KOMODO_OIDC_CLIENT_SECRET:-}
+      KOMODO_OIDC_ADDITIONAL_AUDIENCES: ${KOMODO_OIDC_ADDITIONAL_AUDIENCES:-}
+      KOMODO_OIDC_USE_FULL_EMAIL: "true"
+      KOMODO_ENABLE_NEW_USERS: ${KOMODO_ENABLE_NEW_USERS:-false}
+      KOMODO_DISABLE_USER_REGISTRATION: ${KOMODO_DISABLE_USER_REGISTRATION:-true}
+      KOMODO_DISABLE_LOCAL_USER_REGISTRATION: ${KOMODO_DISABLE_LOCAL_USER_REGISTRATION:-}
+    volumes:
+      - komodo-keys:/config/keys
+      - komodo-backups:/backups
+
+  komodo-periphery:
+    image: ghcr.io/moghtech/komodo-periphery:2.2.0
+    init: true
+    restart: unless-stopped
+    depends_on:
+      - komodo-core
+    environment:
+      PERIPHERY_CORE_ADDRESS: ws://tailscale-komodo:9120
+      PERIPHERY_CORE_PUBLIC_KEYS: file:/config/keys/core.pub
+      PERIPHERY_CONNECT_AS: Local
+      PERIPHERY_ROOT_DIRECTORY: /etc/komodo
+    volumes:
+      - komodo-keys:/config/keys
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /proc:/proc
+      - /etc/komodo:/etc/komodo
+    networks:
+      - internal
+
+volumes:
+  traefik-acme:
+  tailscale-komodo-state:
+  komodo-mongo-data:
+  komodo-mongo-config:
+  komodo-keys:
+  komodo-backups:
+
+networks:
+  internal:
+    name: internal
+    external: true
+  public:
+    name: public
+    external: true

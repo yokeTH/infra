@@ -1,0 +1,5 @@
+.env
+**/.env
+**/secrets/
+**/acme.json
+**/data/

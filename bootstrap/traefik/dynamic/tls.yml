@@ -1,0 +1,3 @@
+# Per-router certs via DNS-01 (see compose labels on each public service).
+# Intentionally empty — `defaultGeneratedCert` was tried but creates a
+# self-signed cert that suppresses ACME, so we don't use it.
