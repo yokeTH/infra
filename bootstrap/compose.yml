@@ -28,7 +28,7 @@ services:
     volumes:
       - tailscale-komodo-state:/var/lib/tailscale
     networks:
-      - internal
+      - komodo
     labels:
       - komodo.skip
 
@@ -59,7 +59,7 @@ services:
       - komodo-mongo-data:/data/db
       - komodo-mongo-config:/data/configdb
     networks:
-      - internal
+      - komodo
     labels:
       - komodo.skip
 
@@ -120,7 +120,7 @@ services:
       - /proc:/proc
       - /etc/komodo:/etc/komodo
     networks:
-      - internal
+      - komodo
     labels:
       - komodo.skip
 
@@ -135,9 +135,8 @@ volumes:
   komodo-backups:
 
 networks:
-  internal:
-    name: internal
-    external: true
+  komodo:
+    name: komodo
   public:
     name: public
     external: true
