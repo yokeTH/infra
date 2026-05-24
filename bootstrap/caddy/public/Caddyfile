@@ -1,5 +1,5 @@
 {
-	email sern.dev@gmail.com
+	email {env.ACME_EMAIL}
 }
 
 *.yoke-th.me {
