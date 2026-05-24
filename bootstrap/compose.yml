@@ -14,6 +14,8 @@ services:
       ACME_EMAIL: ${ACME_EMAIL}
     volumes:
       - ./caddy/public/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../stacks/zitadel/caddy.snippet:/etc/caddy/sites/zitadel.caddy:ro
+      - ../stacks/stalwart/caddy.snippet:/etc/caddy/sites/stalwart.caddy:ro
       - caddy-data:/data
       - caddy-config:/config
     networks:
