@@ -20,6 +20,10 @@ services:
     networks:
       - internal
       - public
+    labels:
+      caddy: mail.yoke-th.me, mta-sts.yoke-th.me, autoconfig.yoke-th.me, autodiscover.yoke-th.me
+      caddy.import: cloudflare_tls
+      caddy.reverse_proxy: "{{upstreams 8080}}"
 
 volumes:
   stalwart-data:
