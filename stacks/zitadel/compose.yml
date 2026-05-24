@@ -97,15 +97,17 @@ services:
     labels:
       caddy: auth.yoke-th.me
       caddy.import: cloudflare_tls
-      caddy.handle_path: /api /api/*
-      caddy.handle_path.reverse_proxy: h2c://zitadel:8080
-      caddy.0_handle: /ui/v2/login*
-      caddy.0_handle.reverse_proxy: "{{upstreams 3000}}"
-      caddy.1_handle: /
-      caddy.1_handle.0_rewrite: "* /ui/v2/login/"
-      caddy.1_handle.1_reverse_proxy: "{{upstreams 3000}}"
-      caddy.2_handle: /*
-      caddy.2_handle.reverse_proxy: h2c://zitadel:8080
+      caddy.@api.path: /api /api/*
+      caddy.0_handle: "@api"
+      caddy.0_handle.0_uri: strip_prefix /api
+      caddy.0_handle.1_reverse_proxy: h2c://zitadel:8080
+      caddy.1_handle: /ui/v2/login*
+      caddy.1_handle.reverse_proxy: "{{upstreams 3000}}"
+      caddy.2_handle: /
+      caddy.2_handle.0_rewrite: "* /ui/v2/login/"
+      caddy.2_handle.1_reverse_proxy: "{{upstreams 3000}}"
+      caddy.3_handle: /*
+      caddy.3_handle.reverse_proxy: h2c://zitadel:8080
 
 volumes:
   zitadel-postgres:
