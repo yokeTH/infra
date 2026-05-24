@@ -94,6 +94,19 @@ services:
     networks:
       - internal
       - public
+    labels:
+      caddy: auth.yoke-th.me
+      caddy.import: cloudflare_tls
+      caddy.0_handle_path: /api /api/*
+      caddy.0_handle_path.reverse_proxy: h2c://zitadel:8080
+      caddy.@login.path: /ui/v2/login*
+      caddy.1_handle: "@login"
+      caddy.1_handle.reverse_proxy: "{{upstreams 3000}}"
+      caddy.@root.path: /
+      caddy.2_handle: "@root"
+      caddy.2_handle.0_rewrite: "* /ui/v2/login/"
+      caddy.2_handle.1_reverse_proxy: "{{upstreams 3000}}"
+      caddy.3_handle.reverse_proxy: h2c://zitadel:8080
 
 volumes:
   zitadel-postgres:

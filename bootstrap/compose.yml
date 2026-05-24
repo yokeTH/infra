@@ -10,12 +10,12 @@ services:
       - "443:443"
       - "443:443/udp"
     environment:
+      CADDY_INGRESS_NETWORKS: public
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
       ACME_EMAIL: ${ACME_EMAIL}
     volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
       - ./caddy/public/Caddyfile:/etc/caddy/Caddyfile:ro
-      - ../stacks/zitadel/caddy.snippet:/etc/caddy/sites/zitadel.caddy:ro
-      - ../stacks/stalwart/caddy.snippet:/etc/caddy/sites/stalwart.caddy:ro
       - caddy-data:/data
       - caddy-config:/config
     networks:
@@ -42,6 +42,7 @@ services:
     build: ./caddy
     image: caddy-cf:local
     restart: unless-stopped
+    command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile"]
     depends_on:
       tailscale-komodo:
         condition: service_started
