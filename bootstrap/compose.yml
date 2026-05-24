@@ -11,6 +11,7 @@ services:
       - "443:443/udp"
     environment:
       CADDY_INGRESS_NETWORKS: public
+      CADDY_DOCKER_CADDYFILE_PATH: /etc/caddy/Caddyfile
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
       ACME_EMAIL: ${ACME_EMAIL}
     volumes:
