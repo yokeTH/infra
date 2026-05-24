@@ -22,7 +22,7 @@ services:
       - public
 
   tailscale-komodo:
-    image: tailscale/tailscale:latest
+    image: tailscale/tailscale:v1.98
     hostname: komodo
     restart: unless-stopped
     environment:
