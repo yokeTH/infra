@@ -1,19 +1,20 @@
 name: bootstrap
 
 services:
-  traefik:
-    image: traefik:v3.7.1
+  caddy:
+    build: ./caddy
+    image: caddy-cf:local
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp"
     environment:
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic:/etc/traefik/dynamic:ro
-      - traefik-acme:/acme
+      - ./caddy/public/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
     networks:
       - public
 
@@ -35,7 +36,8 @@ services:
       - komodo.skip
 
   caddy-komodo:
-    build: ./caddy-komodo
+    build: ./caddy
+    image: caddy-cf:local
     restart: unless-stopped
     depends_on:
       tailscale-komodo:
@@ -44,7 +46,7 @@ services:
     environment:
       CF_DNS_API_TOKEN: ${CF_DNS_API_TOKEN}
     volumes:
-      - ./caddy-komodo/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/komodo/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-komodo-data:/data
       - caddy-komodo-config:/config
     labels:
@@ -127,7 +129,8 @@ services:
       - komodo.skip
 
 volumes:
-  traefik-acme:
+  caddy-data:
+  caddy-config:
   caddy-komodo-data:
   caddy-komodo-config:
   tailscale-komodo-state:

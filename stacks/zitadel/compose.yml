@@ -42,7 +42,7 @@ services:
       ZITADEL_EXTERNALPORT: 443
       ZITADEL_EXTERNALSECURE: "true"
       ZITADEL_TLS_ENABLED: "false"
-      # Enable Login V2 and point it at the external URL Traefik serves
+      # Enable Login V2 and point it at the external URL Caddy serves
       ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
       ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: https://auth.yoke-th.me/ui/v2/login/
       ZITADEL_OIDC_DEFAULTLOGINURLV2: https://auth.yoke-th.me/ui/v2/login/login?authRequest=
@@ -66,30 +66,6 @@ services:
     networks:
       - internal
       - public
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=public
-      - traefik.http.services.zitadel-api.loadbalancer.server.port=8080
-      - traefik.http.services.zitadel-api.loadbalancer.server.scheme=h2c
-      # Convenience /api/* alias (strip prefix and forward to API)
-      - traefik.http.middlewares.zitadel-strip-api.stripprefix.prefixes=/api
-      - traefik.http.middlewares.zitadel-strip-api.stripprefix.forceSlash=false
-      - traefik.http.routers.zitadel-api-alias.rule=Host(`auth.yoke-th.me`) && PathPrefix(`/api`)
-      - traefik.http.routers.zitadel-api-alias.entrypoints=websecure
-      - traefik.http.routers.zitadel-api-alias.tls=true
-      - traefik.http.routers.zitadel-api-alias.tls.certresolver=cloudflare
-      - traefik.http.routers.zitadel-api-alias.tls.domains[0].main=yoke-th.me
-      - traefik.http.routers.zitadel-api-alias.tls.domains[0].sans=*.yoke-th.me
-      - traefik.http.routers.zitadel-api-alias.middlewares=zitadel-strip-api
-      - traefik.http.routers.zitadel-api-alias.service=zitadel-api
-      - traefik.http.routers.zitadel-api-alias.priority=200
-      # Catch-all for API endpoints (NOT /ui/v2/login, NOT /api, NOT bare /)
-      - traefik.http.routers.zitadel-canonical.rule=Host(`auth.yoke-th.me`) && !PathPrefix(`/ui/v2/login`) && !PathPrefix(`/api`) && !Path(`/`)
-      - traefik.http.routers.zitadel-canonical.entrypoints=websecure
-      - traefik.http.routers.zitadel-canonical.tls=true
-      - traefik.http.routers.zitadel-canonical.tls.certresolver=cloudflare
-      - traefik.http.routers.zitadel-canonical.service=zitadel-api
-      - traefik.http.routers.zitadel-canonical.priority=100
 
   zitadel-login:
     image: ghcr.io/zitadel/zitadel-login:v4.15.0
@@ -118,28 +94,6 @@ services:
     networks:
       - internal
       - public
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=public
-      - traefik.http.services.zitadel-login.loadbalancer.server.port=3000
-      # Rewrite bare `/` to `/ui/v2/login/`
-      - traefik.http.middlewares.zitadel-root-rewrite.replacepath.path=/ui/v2/login/
-      - traefik.http.routers.zitadel-root.rule=Host(`auth.yoke-th.me`) && Path(`/`)
-      - traefik.http.routers.zitadel-root.entrypoints=websecure
-      - traefik.http.routers.zitadel-root.tls=true
-      - traefik.http.routers.zitadel-root.tls.certresolver=cloudflare
-      - traefik.http.routers.zitadel-root.tls.domains[0].main=yoke-th.me
-      - traefik.http.routers.zitadel-root.tls.domains[0].sans=*.yoke-th.me
-      - traefik.http.routers.zitadel-root.middlewares=zitadel-root-rewrite
-      - traefik.http.routers.zitadel-root.service=zitadel-login
-      - traefik.http.routers.zitadel-root.priority=400
-      # Login UI under /ui/v2/login/*
-      - traefik.http.routers.zitadel-login.rule=Host(`auth.yoke-th.me`) && PathPrefix(`/ui/v2/login`)
-      - traefik.http.routers.zitadel-login.entrypoints=websecure
-      - traefik.http.routers.zitadel-login.tls=true
-      - traefik.http.routers.zitadel-login.tls.certresolver=cloudflare
-      - traefik.http.routers.zitadel-login.service=zitadel-login
-      - traefik.http.routers.zitadel-login.priority=250
 
 volumes:
   zitadel-postgres:
