@@ -1,0 +1,50 @@
+{
+	email sern.dev@gmail.com
+}
+
+*.yoke-th.me {
+	tls {
+		dns cloudflare {env.CF_DNS_API_TOKEN}
+		resolvers 1.1.1.1 1.0.0.1
+	}
+
+	# --- Zitadel (auth.yoke-th.me) ---
+
+	@auth_root {
+		host auth.yoke-th.me
+		path /
+	}
+	handle @auth_root {
+		rewrite * /ui/v2/login/
+		reverse_proxy zitadel-login:3000
+	}
+
+	@auth_login {
+		host auth.yoke-th.me
+		path /ui/v2/login*
+	}
+	handle @auth_login {
+		reverse_proxy zitadel-login:3000
+	}
+
+	@auth_api {
+		host auth.yoke-th.me
+		path /api /api/*
+	}
+	handle @auth_api {
+		uri strip_prefix /api
+		reverse_proxy h2c://zitadel:8080
+	}
+
+	@auth host auth.yoke-th.me
+	handle @auth {
+		reverse_proxy h2c://zitadel:8080
+	}
+
+	# --- Stalwart (mail + autoconfig/autodiscover/mta-sts) ---
+
+	@mail host mail.yoke-th.me mta-sts.yoke-th.me autoconfig.yoke-th.me autodiscover.yoke-th.me
+	handle @mail {
+		reverse_proxy stalwart:8080
+	}
+}

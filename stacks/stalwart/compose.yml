@@ -20,16 +20,6 @@ services:
     networks:
       - internal
       - public
-    labels:
-      - traefik.enable=true
-      - traefik.docker.network=public
-      - traefik.http.routers.stalwart.rule=Host(`mail.yoke-th.me`) || Host(`mta-sts.yoke-th.me`) || Host(`autoconfig.yoke-th.me`) || Host(`autodiscover.yoke-th.me`)
-      - traefik.http.routers.stalwart.entrypoints=websecure
-      - traefik.http.routers.stalwart.tls=true
-      - traefik.http.routers.stalwart.tls.certresolver=cloudflare
-      - traefik.http.routers.stalwart.tls.domains[0].main=yoke-th.me
-      - traefik.http.routers.stalwart.tls.domains[0].sans=*.yoke-th.me
-      - traefik.http.services.stalwart.loadbalancer.server.port=8080
 
 volumes:
   stalwart-data:
